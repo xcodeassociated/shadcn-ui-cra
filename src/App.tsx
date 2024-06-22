@@ -14,6 +14,7 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useTranslation } from 'react-i18next'
 
 const CodeText = (props: ComponentProps<'span'>) => {
   return <span {...props}
@@ -23,6 +24,7 @@ const CodeText = (props: ComponentProps<'span'>) => {
 function App() {
   const [count, setCount] = useState(0)
   const { theme } = useTheme()
+  const { t } = useTranslation(['main'])
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
