@@ -4,17 +4,27 @@ import { useTheme } from './components/theme-provider'
 import { Button } from './components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './components/ui/card'
 import { cn } from './lib/utils'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { Menu, Search, UserCircle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useTranslation } from 'react-i18next'
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from '@/components/ui/navigation-menu'
+import { useLocation, useNavigate } from 'react-router'
+import { Label } from '@/components/ui/label'
 
 const CodeText = (props: ComponentProps<'span'>) => {
   return <span {...props}
@@ -25,6 +35,8 @@ function App() {
   const [count, setCount] = useState(0)
   const { theme } = useTheme()
   const { t } = useTranslation(['main'])
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -41,90 +53,53 @@ function App() {
       <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
         <nav
           className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-          <a
-            href="#"
-            className="flex items-center gap-2 text-lg font-semibold md:text-base"
-          >
-            <a className="">Shadcn</a>
-          </a>
-          <a
-            href="#"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Dashboard
-          </a>
-          <a
-            href="#"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Orders
-          </a>
-          <a
-            href="#"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Products
-          </a>
-          <a
-            href="#"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Customers
-          </a>
-          <a
-            href="#"
-            className="text-foreground transition-colors hover:text-foreground"
-          >
-            Settings
-          </a>
+          <Label className="flex items-center gap-2 text-lg font-semibold md:text-base"
+                 onClick={() => navigate('/')}>Shadcn</Label>
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()} active={location.pathname === '/'}
+                                    onClick={() => navigate('/')}>
+                  Home
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()} active={location.pathname === '/about'}
+                                    onClick={() => navigate('/about')}>
+                  About
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
         </nav>
         <Sheet>
           <SheetTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="shrink-0 md:hidden"
-            >
+            <Button variant="outline" size="icon" className="shrink-0 md:hidden">
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle navigation menu</span>
             </Button>
           </SheetTrigger>
           <SheetContent side="left">
-            <nav className="grid gap-6 text-lg font-medium">
-              <a
-                href="#"
-                className="flex items-center gap-2 text-lg font-semibold"
-              >
-                <a className="">Shadcn</a>
-                <span className="sr-only"></span>
-              </a>
-              <a
-                href="#"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Dashboard
-              </a>
-              <a
-                href="#"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Orders
-              </a>
-              <a
-                href="#"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Products
-              </a>
-              <a
-                href="#"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Customers
-              </a>
-              <a href="#" className="hover:text-foreground">
-                Settings
-              </a>
+            <nav className="grid gap-3 text-lg font-normal">
+              <SheetTitle className="flex items-center gap-2 text-3xl font-semibold">Shadcn</SheetTitle>
+              <SheetDescription>
+                <span className="sr-only">Navigation menu</span>
+              </SheetDescription>
+              <SheetClose asChild>
+              <Label className="text-xl text-muted-foreground hover:text-foreground p-2 border bg-muted rounded" onClick={() => {
+                  navigate('/')
+                }}>
+                  <SheetClose asChild></SheetClose>
+                  Home
+                </Label>
+              </SheetClose>
+              <SheetClose asChild>
+                <Label className="text-xl text-muted-foreground hover:text-foreground p-2 border bg-muted rounded" onClick={() => {
+                  navigate('/about')
+                }}>
+                  About
+                </Label>
+              </SheetClose>
             </nav>
           </SheetContent>
         </Sheet>
@@ -153,10 +128,10 @@ function App() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => handleUserDropdownSelect("settings")}>Settings</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleUserDropdownSelect("support")}>Support</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleUserDropdownSelect('settings')}>Settings</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleUserDropdownSelect('support')}>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => handleUserDropdownSelect("logout")}>Logout</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleUserDropdownSelect('logout')}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
