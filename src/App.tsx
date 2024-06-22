@@ -5,7 +5,15 @@ import { Button } from './components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './components/ui/card'
 import { cn } from './lib/utils'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { Menu } from 'lucide-react'
+import { Menu, Search, UserCircle } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 const CodeText = (props: ComponentProps<'span'>) => {
   return <span {...props}
@@ -15,6 +23,17 @@ const CodeText = (props: ComponentProps<'span'>) => {
 function App() {
   const [count, setCount] = useState(0)
   const { theme } = useTheme()
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    console.log(`search: ${e.currentTarget.search.value}`)
+    e.currentTarget.reset()
+  }
+
+  const handleUserDropdownSelect = (item: string) => {
+    console.log(`User dropdown change: ${item}`)
+  }
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -108,9 +127,36 @@ function App() {
           </SheetContent>
         </Sheet>
         <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-          <div className="last-of-type: ml-auto">
+          <form className="ml-auto flex-1 sm:flex-initial" onSubmit={handleSearch}>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                name="search"
+                placeholder="Search..."
+                className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
+              />
+            </div>
+          </form>
+          <div>
             <ModeToggle />
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="icon" className="rounded-full">
+                <UserCircle className="h-5 w-5" />
+                <span className="sr-only">Toggle user menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => handleUserDropdownSelect("settings")}>Settings</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleUserDropdownSelect("support")}>Support</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => handleUserDropdownSelect("logout")}>Logout</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
       <main
