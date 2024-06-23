@@ -26,17 +26,78 @@ import {
 import { useLocation, useNavigate } from 'react-router'
 import { Label } from '@/components/ui/label'
 
+
+type MenuItem = {
+  readonly key: string
+  readonly route: string
+  readonly restricted: boolean
+}
+
+const menuItems: MenuItem[] = [
+  {
+    key: 'Home',
+    route: '/',
+    restricted: false,
+  },
+  {
+    key: 'About',
+    route: '/about',
+    restricted: false,
+  },
+  {
+    key: 'Counter',
+    route: '/counter',
+    restricted: true,
+  },
+  {
+    key: 'Users',
+    route: '/users',
+    restricted: true,
+  },
+]
+
+const NavMenuItem = ({ item }: { item: MenuItem }) => {
+  const navigate = useNavigate()
+  const location = useLocation()
+  return (
+    <NavigationMenuItem>
+      <NavigationMenuLink className={navigationMenuTriggerStyle() + ' cursor-pointer'}
+                          active={location.pathname === item.route}
+                          onClick={() => navigate(item.route)}>
+        {item.key}
+      </NavigationMenuLink>
+    </NavigationMenuItem>
+  )
+}
+
+const SideMenuItem = ({ item }: { item: MenuItem }) => {
+  const navigate = useNavigate()
+  const location = useLocation()
+  return (
+    <SheetClose asChild>
+      <Label
+        className={((location.pathname === item.route) ? 'text-xl' : 'text-xl text-muted-foreground') +
+          ' hover:text-foreground p-2 border bg-muted rounded cursor-pointer'}
+        onClick={() => navigate(item.route)}>
+        {item.key}
+      </Label>
+    </SheetClose>
+  )
+}
+
 const CodeText = (props: ComponentProps<'span'>) => {
   return <span {...props}
                className={cn(props.className, 'bg-muted text-muted-foreground rounded font-mono text-sm p-1')} />
 }
+
+// todo: replace with actual auth check
+const authenticated = true
 
 function App() {
   const [count, setCount] = useState(0)
   const { theme } = useTheme()
   const { t } = useTranslation(['main'])
   const navigate = useNavigate()
-  const location = useLocation()
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -53,22 +114,13 @@ function App() {
       <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
         <nav
           className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-          <Label className="flex items-center gap-2 text-lg font-semibold md:text-base"
+          <Label className="flex items-center gap-2 text-lg font-semibold md:text-base cursor-pointer"
                  onClick={() => navigate('/')}>Shadcn</Label>
           <NavigationMenu>
             <NavigationMenuList>
-              <NavigationMenuItem>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()} active={location.pathname === '/'}
-                                    onClick={() => navigate('/')}>
-                  Home
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()} active={location.pathname === '/about'}
-                                    onClick={() => navigate('/about')}>
-                  About
-                </NavigationMenuLink>
-              </NavigationMenuItem>
+              {menuItems.filter((item) => item.restricted ? authenticated : true).map((item) => (
+                <NavMenuItem key={item.key} item={item} />
+              ))}
             </NavigationMenuList>
           </NavigationMenu>
         </nav>
@@ -85,21 +137,9 @@ function App() {
               <SheetDescription>
                 <span className="sr-only">Navigation menu</span>
               </SheetDescription>
-              <SheetClose asChild>
-              <Label className="text-xl text-muted-foreground hover:text-foreground p-2 border bg-muted rounded" onClick={() => {
-                  navigate('/')
-                }}>
-                  <SheetClose asChild></SheetClose>
-                  Home
-                </Label>
-              </SheetClose>
-              <SheetClose asChild>
-                <Label className="text-xl text-muted-foreground hover:text-foreground p-2 border bg-muted rounded" onClick={() => {
-                  navigate('/about')
-                }}>
-                  About
-                </Label>
-              </SheetClose>
+              {menuItems.filter((item) => item.restricted ? authenticated : true).map((item) => (
+                <SideMenuItem key={item.key} item={item} />
+              ))}
             </nav>
           </SheetContent>
         </Sheet>
