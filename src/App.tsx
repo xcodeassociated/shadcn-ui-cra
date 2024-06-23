@@ -1,18 +1,22 @@
 import React, { ComponentProps, useState } from 'react'
-import { ModeToggle } from './components/mode-toggle'
-import { useTheme } from './components/theme-provider'
-import { Button } from './components/ui/button'
+import { ModeToggle } from '@/components/mode-toggle'
+import { useTheme } from '@/components/theme-provider'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './components/ui/card'
-import { cn } from './lib/utils'
+import { cn } from '@/lib/utils'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { Menu, Search, UserCircle } from 'lucide-react'
+import { Languages, LogOut, Menu, MessageSquare, Search, Settings, User, UserCircle, UserPlus } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useTranslation } from 'react-i18next'
@@ -90,14 +94,12 @@ const CodeText = (props: ComponentProps<'span'>) => {
                className={cn(props.className, 'bg-muted text-muted-foreground rounded font-mono text-sm p-1')} />
 }
 
-// todo: replace with actual auth check
-const authenticated = true
-
 function App() {
   const [count, setCount] = useState(0)
   const { theme } = useTheme()
   const { t } = useTranslation(['main'])
   const navigate = useNavigate()
+  const [authenticated, setAuthenticated] = useState(true)
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -165,14 +167,62 @@ function App() {
                 <span className="sr-only">Toggle user menu</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => handleUserDropdownSelect('settings')}>Settings</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleUserDropdownSelect('support')}>Support</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => handleUserDropdownSelect('logout')}>Logout</DropdownMenuItem>
-            </DropdownMenuContent>
+            {authenticated ?
+              <>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => handleUserDropdownSelect('profile')}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => handleUserDropdownSelect('settings')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <Languages className="mr-2 h-4 w-4" />
+                      <span>Select Language</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem onSelect={() => handleUserDropdownSelect('lang/english')}>
+                          <span>English</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleUserDropdownSelect('lang/polish')}>
+                          <span>Polski</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => {
+                    handleUserDropdownSelect('logout')
+                    setAuthenticated(false)
+                  }}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Logout</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </> :
+              <>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => {
+                    handleUserDropdownSelect('login')
+                    setAuthenticated(true)
+                  }}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Login</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => handleUserDropdownSelect('register')}>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    <span>Register</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </>
+            }
           </DropdownMenu>
         </div>
       </header>
@@ -359,9 +409,13 @@ function App() {
           </Card>
         </div>
       </main>
+      <footer className="flex items-center justify-center  h-16 border-t bg-background px-4 md:px-6">
+        <div className="flex items-center gap-4">
+          <MessageSquare className="h-5 w-5" />
+          <span className="text-muted-foreground">Made with ❤️ & Shadcn</span>
+        </div>
+      </footer>
     </div>
-
-
   )
 }
 
