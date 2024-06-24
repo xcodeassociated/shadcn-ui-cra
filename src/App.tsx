@@ -1,11 +1,22 @@
-import React, { ComponentProps, useState } from 'react'
+import React, { ComponentProps, useEffect, useState } from 'react'
 import { ModeToggle } from '@/components/mode-toggle'
 import { useTheme } from '@/components/theme-provider'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './components/ui/card'
 import { cn } from '@/lib/utils'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { Languages, LogOut, Menu, MessageSquare, Search, Settings, User, UserCircle, UserPlus } from 'lucide-react'
+import {
+  Languages,
+  LogOut,
+  Menu,
+  MessageSquare,
+  MoreHorizontal,
+  Search,
+  Settings,
+  User,
+  UserCircle,
+  UserPlus,
+} from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
@@ -29,6 +40,75 @@ import {
 } from '@/components/ui/navigation-menu'
 import { useLocation, useNavigate } from 'react-router'
 import { Label } from '@/components/ui/label'
+
+import { ColumnDef, flexRender, getCoreRowModel, PaginationState, useReactTable } from '@tanstack/react-table'
+
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+
+export interface Role {
+  readonly _id: string | undefined
+  name: string
+  description: string
+
+  version: number | undefined
+  createdBy: string | undefined
+  createdDate: string | undefined
+  modifiedBy: string | undefined
+  modifiedDate: string | undefined
+}
+
+export interface User {
+  readonly _id: string | undefined
+  name: string
+  email: string
+  role: Role[]
+
+  version: number | undefined
+  createdBy: string | undefined
+  createdDate: string | undefined
+  modifiedBy: string | undefined
+  modifiedDate: string | undefined
+}
+
+export class Page {
+  page: number
+  pageSize: number
+  sort: string
+  direction: string
+
+  constructor(page: number = 0, pageSize: number = 10, sort: string = 'id', direction: string = 'ASC') {
+    this.page = page
+    this.pageSize = pageSize
+    this.sort = sort
+    this.direction = direction
+  }
+}
+
+const parse = (data: User) => {
+  return {
+    name: data.name,
+    email: data.email,
+    role: data.role.map((e) => e._id),
+    version: data.version,
+  }
+}
 
 
 type MenuItem = {
@@ -92,6 +172,358 @@ const SideMenuItem = ({ item }: { item: MenuItem }) => {
 const CodeText = (props: ComponentProps<'span'>) => {
   return <span {...props}
                className={cn(props.className, 'bg-muted text-muted-foreground rounded font-mono text-sm p-1')} />
+}
+
+const roles: Role[] = [
+  {
+    _id: '1',
+    name: 'Admin',
+    description: 'Admin Role',
+    version: 1,
+    createdBy: 'Admin',
+    createdDate: '2021-10-01',
+    modifiedBy: 'Admin',
+    modifiedDate: '2021-10-01',
+  },
+  {
+    _id: '2',
+    name: 'User',
+    description: 'User Role',
+    version: 1,
+    createdBy: 'Admin',
+    createdDate: '2021-10-01',
+    modifiedBy: 'Admin',
+    modifiedDate: '2021-10-01',
+  },
+]
+
+const users: User[] = [
+  {
+    _id: '1',
+    name: 'Admin',
+    email: 'admin@admin',
+    role: [roles[0]],
+    version: 1,
+    createdBy: 'Admin',
+    createdDate: '2021-10-01',
+    modifiedBy: 'Admin',
+    modifiedDate: '2021-10-01',
+  },
+  {
+    _id: '2',
+    name: 'User',
+    email: 'user@user',
+    role: [roles[1]],
+    version: 1,
+    createdBy: 'Admin',
+    createdDate: '2021-10-01',
+    modifiedBy: 'Admin',
+    modifiedDate: '2021-10-01',
+  },
+]
+
+const getUsers = async (page: Page): Promise<User[]> => {
+  console.log(`Get users: ${JSON.stringify(page)}`)
+  return users
+}
+
+const getUsersSize = async (): Promise<number> => users.length
+
+const updateUser = async (user: User, callback: Function): Promise<User> => {
+  console.log(`Update user: ${JSON.stringify(parse(user))}`)
+  callback()
+  return user
+}
+
+const deleteUser = async (user: User): Promise<void> => {
+  console.log(`Delete user: ${user._id}`)
+}
+
+
+const formSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(2, {
+    message: 'Username must be at least 2 characters.',
+  }),
+  email: z.string().min(2, {
+    message: 'Username must be at least 2 characters.',
+  }),
+  role: z.string().length(1, {
+    message: 'You must select role.',
+  }),
+})
+
+const Users = () => {
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 1,
+  })
+  const [users, setUsers] = useState<User[]>([])
+  const [usersSize, setUsersSize] = useState(0)
+
+  // for dialog
+  const [isOpen, setIsOpen] = useState(false)
+
+  useEffect(() => {
+    getUsers(new Page(pagination.pageIndex, pagination.pageSize, 'id', 'ASC'))
+      .then((data) => setUsers(data))
+      .catch((e) => console.error(e))
+
+    getUsersSize()
+      .then((data) => setUsersSize(data))
+      .catch((e) => console.error(e))
+  }, [])
+
+  useEffect(() => {
+    getUsers(new Page(pagination.pageIndex, pagination.pageSize, 'id', 'ASC'))
+      .then((data) => setUsers(data))
+      .catch((e) => console.error(e))
+  }, [pagination])
+
+  const columns: ColumnDef<User>[] = [
+    {
+      accessorKey: '_id',
+      header: 'ID',
+    },
+    {
+      accessorKey: 'name',
+      header: 'Name',
+    },
+    {
+      accessorKey: 'email',
+      header: 'Email',
+    },
+    {
+      accessorKey: 'role',
+      header: () => <div className="font-bold">Role</div>,
+      cell: ({ row }) => {
+        const formatted = row.original.role.map((role) => role.name).join(', ')
+        return <div className="">{formatted}</div>
+      },
+    },
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => {
+        const user = row.original
+        return (
+          <div className="flex">
+            <div className="ml-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => updateUser(user, () => {
+                    setIsOpen(true)
+                    form.setValue('id', user._id)
+                    form.setValue('name', user.name)
+                    form.setValue('email', user.email)
+                    form.setValue('role', user.role[0]._id!!)
+                  })}>Update</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => deleteUser(user)}>Delete</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        )
+      },
+    },
+  ]
+
+  const table = useReactTable({
+    data: users,
+    columns: columns,
+    getCoreRowModel: getCoreRowModel(),
+    onPaginationChange: setPagination,
+    rowCount: usersSize,
+    state: {
+      pagination,
+    },
+    manualPagination: true,
+    debugTable: false,
+  })
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      id: undefined,
+      name: '',
+      email: '',
+      role: '',
+    },
+  })
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log(values)
+    form.reset()
+    setIsOpen(false)
+  }
+
+  return (
+    <div>
+      <div className="flex flex-col">
+        <Dialog open={isOpen} onOpenChange={(e) => {
+          setIsOpen(e)
+          form.reset()
+        }}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="ml-auto flex-1 my-4">Add user</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>{form.getValues().id === undefined ? 'Add user' : 'Update user'}</DialogTitle>
+              <DialogDescription>
+                Some description goes here.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem className="col-span-4">
+                          <FormLabel>Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your name" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            Some text goes here.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem className="col-span-4">
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your email" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <FormField
+                      control={form.control}
+                      name="role"
+                      render={({ field }) => (
+                        <FormItem className="col-span-4">
+                          <FormLabel>Role</FormLabel>
+                          <FormControl>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Select a role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectGroup>
+                                  {roles.map((role) => (
+                                    <SelectItem key={role._id}
+                                                value={role._id?.toString() ? role._id?.toString() : ''}>{role.name}</SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit">Submit</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                      </TableHead>
+                    )
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="flex items-center my-4">
+          <div className="ml-auto text-sm text-muted-foreground">
+            {pagination.pageIndex + 1} of {table.getPageCount()}
+          </div>
+          <div className="ml-2 space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function App() {
@@ -261,6 +693,22 @@ function App() {
               </Button>
             </CardContent>
           </Card>
+          {/* Users Page */}
+          <Card className="">
+            <CardHeader>
+              <CardTitle>Users</CardTitle>
+              <CardDescription>Users Table</CardDescription>
+            </CardHeader>
+            <CardContent className="">
+              <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque in volutpat leo. Quisque congue
+                vestibulum quam. Maecenas accumsan ipsum risus, sed ullamcorper nunc fringilla blandit. Vivamus pretium
+                aliquet est, sit amet sagittis erat egestas in.
+              </p>
+              <Users />
+            </CardContent>
+          </Card>
+          {/**/}
           <Card className="h-72">
             <CardHeader>
               <CardTitle>Dark Mode</CardTitle>
