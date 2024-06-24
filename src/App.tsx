@@ -110,7 +110,6 @@ const parse = (data: User) => {
   }
 }
 
-
 type MenuItem = {
   readonly key: string
   readonly route: string
@@ -145,9 +144,11 @@ const NavMenuItem = ({ item }: { item: MenuItem }) => {
   const location = useLocation()
   return (
     <NavigationMenuItem>
-      <NavigationMenuLink className={navigationMenuTriggerStyle() + ' cursor-pointer'}
-                          active={location.pathname === item.route}
-                          onClick={() => navigate(item.route)}>
+      <NavigationMenuLink
+        className={navigationMenuTriggerStyle() + ' cursor-pointer'}
+        active={location.pathname === item.route}
+        onClick={() => navigate(item.route)}
+      >
         {item.key}
       </NavigationMenuLink>
     </NavigationMenuItem>
@@ -160,9 +161,12 @@ const SideMenuItem = ({ item }: { item: MenuItem }) => {
   return (
     <SheetClose asChild>
       <Label
-        className={((location.pathname === item.route) ? 'text-xl' : 'text-xl text-muted-foreground') +
-          ' hover:text-foreground p-2 border bg-muted rounded cursor-pointer'}
-        onClick={() => navigate(item.route)}>
+        className={
+          (location.pathname === item.route ? 'text-xl' : 'text-xl text-muted-foreground') +
+          ' cursor-pointer rounded border bg-muted p-2 hover:text-foreground'
+        }
+        onClick={() => navigate(item.route)}
+      >
         {item.key}
       </Label>
     </SheetClose>
@@ -170,8 +174,9 @@ const SideMenuItem = ({ item }: { item: MenuItem }) => {
 }
 
 const CodeText = (props: ComponentProps<'span'>) => {
-  return <span {...props}
-               className={cn(props.className, 'bg-muted text-muted-foreground rounded font-mono text-sm p-1')} />
+  return (
+    <span {...props} className={cn(props.className, 'rounded bg-muted p-1 font-mono text-sm text-muted-foreground')} />
+  )
 }
 
 const roles: Role[] = [
@@ -238,7 +243,6 @@ const updateUser = async (user: User, callback: Function): Promise<User> => {
 const deleteUser = async (user: User): Promise<void> => {
   console.log(`Delete user: ${user._id}`)
 }
-
 
 const formSchema = z.object({
   id: z.string().optional(),
@@ -319,13 +323,19 @@ const Users = () => {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={() => updateUser(user, () => {
-                    setIsOpen(true)
-                    form.setValue('id', user._id)
-                    form.setValue('name', user.name)
-                    form.setValue('email', user.email)
-                    form.setValue('role', user.role[0]._id!!)
-                  })}>Update</DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      updateUser(user, () => {
+                        setIsOpen(true)
+                        form.setValue('id', user._id)
+                        form.setValue('name', user.name)
+                        form.setValue('email', user.email)
+                        form.setValue('role', user.role[0]._id!!)
+                      })
+                    }
+                  >
+                    Update
+                  </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => deleteUser(user)}>Delete</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -368,19 +378,22 @@ const Users = () => {
   return (
     <div>
       <div className="flex flex-col">
-        <Dialog open={isOpen} onOpenChange={(e) => {
-          setIsOpen(e)
-          form.reset()
-        }}>
+        <Dialog
+          open={isOpen}
+          onOpenChange={(e) => {
+            setIsOpen(e)
+            form.reset()
+          }}
+        >
           <DialogTrigger asChild>
-            <Button variant="outline" className="ml-auto flex-1 my-4">Add user</Button>
+            <Button variant="outline" className="my-4 ml-auto flex-1">
+              Add user
+            </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>{form.getValues().id === undefined ? 'Add user' : 'Update user'}</DialogTitle>
-              <DialogDescription>
-                Some description goes here.
-              </DialogDescription>
+              <DialogDescription>Some description goes here.</DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -395,9 +408,7 @@ const Users = () => {
                           <FormControl>
                             <Input placeholder="Enter your name" {...field} />
                           </FormControl>
-                          <FormDescription>
-                            Some text goes here.
-                          </FormDescription>
+                          <FormDescription>Some text goes here.</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -433,8 +444,9 @@ const Users = () => {
                               <SelectContent>
                                 <SelectGroup>
                                   {roles.map((role) => (
-                                    <SelectItem key={role._id}
-                                                value={role._id?.toString() ? role._id?.toString() : ''}>{role.name}</SelectItem>
+                                    <SelectItem key={role._id} value={role._id?.toString() ? role._id?.toString() : ''}>
+                                      {role.name}
+                                    </SelectItem>
                                   ))}
                                 </SelectGroup>
                               </SelectContent>
@@ -462,12 +474,7 @@ const Users = () => {
                   {headerGroup.headers.map((header) => {
                     return (
                       <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     )
                   })}
@@ -477,14 +484,9 @@ const Users = () => {
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                  >
+                  <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
+                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                     ))}
                   </TableRow>
                 ))
@@ -498,7 +500,7 @@ const Users = () => {
             </TableBody>
           </Table>
         </div>
-        <div className="flex items-center my-4">
+        <div className="my-4 flex items-center">
           <div className="ml-auto text-sm text-muted-foreground">
             {pagination.pageIndex + 1} of {table.getPageCount()}
           </div>
@@ -511,12 +513,7 @@ const Users = () => {
             >
               Previous
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
+            <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
               Next
             </Button>
           </div>
@@ -545,16 +542,21 @@ function App() {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-10">
-        <nav
-          className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-          <Label className="flex items-center gap-2 text-lg font-semibold md:text-base cursor-pointer"
-                 onClick={() => navigate('/')}>Shadcn</Label>
+      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+          <Label
+            className="flex cursor-pointer items-center gap-2 text-lg font-semibold md:text-base"
+            onClick={() => navigate('/')}
+          >
+            Shadcn
+          </Label>
           <NavigationMenu>
             <NavigationMenuList>
-              {menuItems.filter((item) => item.restricted ? authenticated : true).map((item) => (
-                <NavMenuItem key={item.key} item={item} />
-              ))}
+              {menuItems
+                .filter((item) => (item.restricted ? authenticated : true))
+                .map((item) => (
+                  <NavMenuItem key={item.key} item={item} />
+                ))}
             </NavigationMenuList>
           </NavigationMenu>
         </nav>
@@ -571,9 +573,11 @@ function App() {
               <SheetDescription>
                 <span className="sr-only">Navigation menu</span>
               </SheetDescription>
-              {menuItems.filter((item) => item.restricted ? authenticated : true).map((item) => (
-                <SideMenuItem key={item.key} item={item} />
-              ))}
+              {menuItems
+                .filter((item) => (item.restricted ? authenticated : true))
+                .map((item) => (
+                  <SideMenuItem key={item.key} item={item} />
+                ))}
             </nav>
           </SheetContent>
         </Sheet>
@@ -599,7 +603,7 @@ function App() {
                 <span className="sr-only">Toggle user menu</span>
               </Button>
             </DropdownMenuTrigger>
-            {authenticated ?
+            {authenticated ? (
               <>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
@@ -630,21 +634,26 @@ function App() {
                     </DropdownMenuPortal>
                   </DropdownMenuSub>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={() => {
-                    handleUserDropdownSelect('logout')
-                    setAuthenticated(false)
-                  }}>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      handleUserDropdownSelect('logout')
+                      setAuthenticated(false)
+                    }}
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Logout</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </> :
+              </>
+            ) : (
               <>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => {
-                    handleUserDropdownSelect('login')
-                    setAuthenticated(true)
-                  }}>
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      handleUserDropdownSelect('login')
+                      setAuthenticated(true)
+                    }}
+                  >
                     <User className="mr-2 h-4 w-4" />
                     <span>Login</span>
                   </DropdownMenuItem>
@@ -654,18 +663,16 @@ function App() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </>
-            }
+            )}
           </DropdownMenu>
         </div>
       </header>
-      <main
-        className="flex min-h-[calc(100vh_-_theme(spacing.16))] min-w-[calc(55vh_-_theme(spacing.16))] flex-1 flex-col gap-4 bg-muted/40 p-4 md:gap-8 md:p-10">
-        <div
-          className="w-full grid grid-cols-1 gap-4 content-start items-center justify-center">
+      <main className="flex min-h-[calc(100vh_-_theme(spacing.16))] min-w-[calc(55vh_-_theme(spacing.16))] flex-1 flex-col gap-4 bg-muted/40 p-4 md:gap-8 md:p-10">
+        <div className="grid w-full grid-cols-1 content-start items-center justify-center gap-4">
           <div className="col-span-1">
             <div className="text-4xl font-bold">Shadcn CRA Starter</div>
-            <div className="text-lg text-muted-foreground">The advantages of
-              Create-React-App and Shadcn UI, all in one place
+            <div className="text-lg text-muted-foreground">
+              The advantages of Create-React-App and Shadcn UI, all in one place
             </div>
           </div>
           <Card className="h-72">
@@ -674,21 +681,17 @@ function App() {
               <CardDescription>Adding Components</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              <div className="text-muted-foreground text-sm">
-                Step 1: Use the <a target="_blank" rel="noreferrer"
-                                   href="https://ui.shadcn.com/docs/cli"
-                                   className="underline">Shadcn-UI CLI
-                Tool</a>
+              <div className="text-sm text-muted-foreground">
+                Step 1: Use the{' '}
+                <a target="_blank" rel="noreferrer" href="https://ui.shadcn.com/docs/cli" className="underline">
+                  Shadcn-UI CLI Tool
+                </a>
               </div>
-              <div
-                className="text-sm p-2 rounded border bg-muted text-muted-foreground">
+              <div className="rounded border bg-muted p-2 text-sm text-muted-foreground">
                 <p className="font-mono">npx shadcn-ui@latest add button</p>
               </div>
-              <div className="text-muted-foreground text-sm">
-                Step 2: Use it !
-              </div>
-              <Button variant="outline"
-                      onClick={() => setCount((count) => count + 1)}>
+              <div className="text-sm text-muted-foreground">Step 2: Use it !</div>
+              <Button variant="outline" onClick={() => setCount((count) => count + 1)}>
                 Count is {count}
               </Button>
             </CardContent>
@@ -715,21 +718,27 @@ function App() {
               <CardDescription>Choose between Light, Dark, or System Theme</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-muted-foreground text-sm mb-1">
-                Example:
-              </div>
-              <div className="border rounded p-4 flex items-center gap-2">
+              <div className="mb-1 text-sm text-muted-foreground">Example:</div>
+              <div className="flex items-center gap-2 rounded border p-4">
                 <ModeToggle />
-                <span
-                  className="mr-4 align-middle">Current Theme: <CodeText>{theme}</CodeText></span>
+                <span className="mr-4 align-middle">
+                  Current Theme: <CodeText>{theme}</CodeText>
+                </span>
               </div>
             </CardContent>
-            <CardFooter className="text-muted-foreground text-sm">
-              <p>A Modified version of Shadcn's <a target="_blank"
-                                                   rel="noreferrer"
-                                                   href="https://ui.shadcn.com/docs/dark-mode/vite"
-                                                   className="underline">Vite Dark Mode</a> is being used for
-                the <CodeText>mode-toggle.tsx</CodeText> and <CodeText>theme-provider.tsx</CodeText> files
+            <CardFooter className="text-sm text-muted-foreground">
+              <p>
+                A Modified version of Shadcn's{' '}
+                <a
+                  target="_blank"
+                  rel="noreferrer"
+                  href="https://ui.shadcn.com/docs/dark-mode/vite"
+                  className="underline"
+                >
+                  Vite Dark Mode
+                </a>{' '}
+                is being used for the <CodeText>mode-toggle.tsx</CodeText> and <CodeText>theme-provider.tsx</CodeText>{' '}
+                files
               </p>
             </CardFooter>
           </Card>
@@ -739,29 +748,33 @@ function App() {
               <CardDescription>Make this app yours</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="list-disc ml-4">
-                <li>There is a <CodeText>components.json</CodeText> file
-                  that will edit what gets added when you
-                  use
-                  the cli 'add' functionality. More info <a target="_blank"
-                                                            rel="noreferrer"
-                                                            href="https://ui.shadcn.com/docs/components-json"
-                                                            className="underline">here</a>.
+              <ul className="ml-4 list-disc">
+                <li>
+                  There is a <CodeText>components.json</CodeText> file that will edit what gets added when you use the
+                  cli 'add' functionality. More info{' '}
+                  <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://ui.shadcn.com/docs/components-json"
+                    className="underline"
+                  >
+                    here
+                  </a>
+                  .
                 </li>
-                <li>You can edit the colors and look of your app by updating
-                  the <CodeText>index.css</CodeText> file
-                  with css generated from the <a target="_blank"
-                                                 rel="noreferrer"
-                                                 href="https://ui.shadcn.com/themes"
-                                                 className="underline">shadcn-ui
-                    Theming Page</a>.
+                <li>
+                  You can edit the colors and look of your app by updating the <CodeText>index.css</CodeText> file with
+                  css generated from the{' '}
+                  <a target="_blank" rel="noreferrer" href="https://ui.shadcn.com/themes" className="underline">
+                    shadcn-ui Theming Page
+                  </a>
+                  .
                 </li>
               </ul>
             </CardContent>
-            <CardFooter className="text-muted-foreground text-sm">
-              <p>You don't have to run <CodeText>npx shadcn-ui
-                init</CodeText>. That is what generated the
-                components
+            <CardFooter className="text-sm text-muted-foreground">
+              <p>
+                You don't have to run <CodeText>npx shadcn-ui init</CodeText>. That is what generated the components
               </p>
             </CardFooter>
           </Card>
@@ -771,93 +784,93 @@ function App() {
               <CardDescription>Have any suggestions?</CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="list-disc ml-4">
-                <li>Check out the <a target="_blank" rel="noreferrer"
-                                     href="https://github.com/ahmad1702/shadcn-ui-cra"
-                                     className="underline">react-shadcn-cra</a> repo.
+              <ul className="ml-4 list-disc">
+                <li>
+                  Check out the{' '}
+                  <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://github.com/ahmad1702/shadcn-ui-cra"
+                    className="underline"
+                  >
+                    react-shadcn-cra
+                  </a>{' '}
+                  repo.
                 </li>
-                <li>You can <a target="_blank" rel="noreferrer"
-                               href="https://github.com/ahmad1702/shadcn-ui-cra/issues/new"
-                               className="underline">open
-                  an issue</a> for any bugs you run into as well as for any
-                  suggestions you may have.
+                <li>
+                  You can{' '}
+                  <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://github.com/ahmad1702/shadcn-ui-cra/issues/new"
+                    className="underline"
+                  >
+                    open an issue
+                  </a>{' '}
+                  for any bugs you run into as well as for any suggestions you may have.
                 </li>
-                <li>We are open to making this fit the use cases for all in
-                  order to decrease the amount of time
-                  to
-                  start a new application using ShadcnUI and CRA.
+                <li>
+                  We are open to making this fit the use cases for all in order to decrease the amount of time to start
+                  a new application using ShadcnUI and CRA.
                 </li>
               </ul>
               <p className="pt-4">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Pellentesque in volutpat leo. Quisque congue vestibulum quam.
-                Maecenas accumsan ipsum risus, sed ullamcorper nunc fringilla
-                blandit. Vivamus pretium aliquet est, sit amet sagittis erat
-                egestas in. Fusce congue dolor sit amet malesuada venenatis. In
-                pretium ornare tellus sit amet consectetur. Integer rutrum
-                iaculis libero, vitae pretium odio volutpat sit amet. Nullam vel
-                magna mauris. Phasellus lacinia nisl justo, ac suscipit purus
-                convallis faucibus. Vestibulum ante ipsum primis in faucibus
-                orci luctus et ultrices posuere cubilia curae;
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque in volutpat leo. Quisque congue
+                vestibulum quam. Maecenas accumsan ipsum risus, sed ullamcorper nunc fringilla blandit. Vivamus pretium
+                aliquet est, sit amet sagittis erat egestas in. Fusce congue dolor sit amet malesuada venenatis. In
+                pretium ornare tellus sit amet consectetur. Integer rutrum iaculis libero, vitae pretium odio volutpat
+                sit amet. Nullam vel magna mauris. Phasellus lacinia nisl justo, ac suscipit purus convallis faucibus.
+                Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae;
               </p>
               <p className="pt-4">
-                Morbi nec mauris aliquam, dapibus elit et, varius ex. Duis enim
-                orci, vehicula ut sollicitudin fermentum, laoreet sed nibh.
-                Quisque quis nibh in eros blandit tristique. Nulla varius
-                blandit lacus, vel sagittis tortor vulputate sit amet. Ut sit
-                amet laoreet diam. Ut quis orci erat. Curabitur mollis ipsum non
-                enim commodo egestas. Proin tristique felis in leo facilisis
-                rutrum. Donec efficitur risus sed justo commodo consequat.
-                Mauris ultricies nisi ligula, ut lacinia dui lobortis in.
-                Vestibulum ante ipsum primis in faucibus orci luctus et ultrices
-                posuere cubilia curae;
+                Morbi nec mauris aliquam, dapibus elit et, varius ex. Duis enim orci, vehicula ut sollicitudin
+                fermentum, laoreet sed nibh. Quisque quis nibh in eros blandit tristique. Nulla varius blandit lacus,
+                vel sagittis tortor vulputate sit amet. Ut sit amet laoreet diam. Ut quis orci erat. Curabitur mollis
+                ipsum non enim commodo egestas. Proin tristique felis in leo facilisis rutrum. Donec efficitur risus sed
+                justo commodo consequat. Mauris ultricies nisi ligula, ut lacinia dui lobortis in. Vestibulum ante ipsum
+                primis in faucibus orci luctus et ultrices posuere cubilia curae;
               </p>
               <p>
-                Mauris auctor, tellus eget rutrum placerat, neque diam
-                condimentum
-                odio, vitae suscipit diam massa id orci. Vivamus eu massa urna.
-                Suspendisse a hendrerit ante, eget pharetra urna. Ut lacinia
-                tincidunt nunc, eu efficitur nunc ornare id. Ut aliquam interdum
-                mollis. Nullam ut commodo mi. Vestibulum lobortis, ipsum quis
-                malesuada venenatis, mi magna posuere quam, eu imperdiet elit ex
-                ultrices tellus. Ut porttitor maximus orci a sagittis. Praesent
-                vulputate felis sit amet nisl congue scelerisque. Phasellus diam
-                ante, accumsan id iaculis sit amet, dapibus a mi. In id
-                consequat
-                ligula, a tristique dolor. Nunc luctus porttitor venenatis.
-                Donec
-                mattis eget purus vel ornare. Nunc suscipit lorem porta
-                porttitor
-                blandit. Fusce sagittis euismod tellus, euismod sodales eros
-                ullamcorper vel. Fusce id felis dui.
+                Mauris auctor, tellus eget rutrum placerat, neque diam condimentum odio, vitae suscipit diam massa id
+                orci. Vivamus eu massa urna. Suspendisse a hendrerit ante, eget pharetra urna. Ut lacinia tincidunt
+                nunc, eu efficitur nunc ornare id. Ut aliquam interdum mollis. Nullam ut commodo mi. Vestibulum
+                lobortis, ipsum quis malesuada venenatis, mi magna posuere quam, eu imperdiet elit ex ultrices tellus.
+                Ut porttitor maximus orci a sagittis. Praesent vulputate felis sit amet nisl congue scelerisque.
+                Phasellus diam ante, accumsan id iaculis sit amet, dapibus a mi. In id consequat ligula, a tristique
+                dolor. Nunc luctus porttitor venenatis. Donec mattis eget purus vel ornare. Nunc suscipit lorem porta
+                porttitor blandit. Fusce sagittis euismod tellus, euismod sodales eros ullamcorper vel. Fusce id felis
+                dui.
               </p>
               <p className="pt-4">
-                Cras sed finibus velit. Proin suscipit augue eu felis
-                consectetur hendrerit. Mauris pharetra metus molestie erat
-                scelerisque viverra. Donec vel lorem nisi. Aenean venenatis
-                semper sem, id blandit nulla consectetur ut. Nulla tincidunt
-                ipsum lacus, tincidunt ullamcorper metus fringilla eget. Morbi
-                vehicula tortor a sem imperdiet, id molestie urna semper. In sem
-                mi, maximus non velit tempus, feugiat consectetur tortor. Fusce
-                nec sem sodales, elementum lectus et, blandit mi. Integer
-                molestie ornare erat eu dictum. Proin vulputate et nulla nec
-                cursus. Nunc vel nulla sagittis, posuere velit vel, elementum
-                dui. Curabitur erat sapien, pellentesque vel lobortis vel,
-                venenatis in libero. Maecenas mauris libero, tincidunt quis leo
-                in, bibendum ullamcorper lectus. Morbi neque sem, finibus eget
-                dapibus at, rhoncus sed odio.
+                Cras sed finibus velit. Proin suscipit augue eu felis consectetur hendrerit. Mauris pharetra metus
+                molestie erat scelerisque viverra. Donec vel lorem nisi. Aenean venenatis semper sem, id blandit nulla
+                consectetur ut. Nulla tincidunt ipsum lacus, tincidunt ullamcorper metus fringilla eget. Morbi vehicula
+                tortor a sem imperdiet, id molestie urna semper. In sem mi, maximus non velit tempus, feugiat
+                consectetur tortor. Fusce nec sem sodales, elementum lectus et, blandit mi. Integer molestie ornare erat
+                eu dictum. Proin vulputate et nulla nec cursus. Nunc vel nulla sagittis, posuere velit vel, elementum
+                dui. Curabitur erat sapien, pellentesque vel lobortis vel, venenatis in libero. Maecenas mauris libero,
+                tincidunt quis leo in, bibendum ullamcorper lectus. Morbi neque sem, finibus eget dapibus at, rhoncus
+                sed odio.
               </p>
             </CardContent>
-            <CardFooter className="text-muted-foreground text-sm">
-              <p>There is also a <a target="_blank" rel="noreferrer"
-                                    href="https://github.com/ahmad1702/shadcn-ui-vite"
-                                    className="underline">Vite
-                React version of this starter</a>.</p>
+            <CardFooter className="text-sm text-muted-foreground">
+              <p>
+                There is also a{' '}
+                <a
+                  target="_blank"
+                  rel="noreferrer"
+                  href="https://github.com/ahmad1702/shadcn-ui-vite"
+                  className="underline"
+                >
+                  Vite React version of this starter
+                </a>
+                .
+              </p>
             </CardFooter>
           </Card>
         </div>
       </main>
-      <footer className="flex items-center justify-center  h-16 border-t bg-background px-4 md:px-6">
+      <footer className="flex h-16 items-center justify-center border-t bg-background px-4 md:px-6">
         <div className="flex items-center gap-4">
           <MessageSquare className="h-5 w-5" />
           <span className="text-muted-foreground">Made with ❤️ & Shadcn</span>
