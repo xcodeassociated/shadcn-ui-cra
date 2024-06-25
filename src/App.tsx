@@ -1,4 +1,4 @@
-import React, { ComponentProps, useEffect, useState } from 'react'
+import React, { ComponentProps, FC, useEffect, useState } from 'react'
 import { ModeToggle } from '@/components/mode-toggle'
 import { useTheme } from '@/components/theme-provider'
 import { Button } from '@/components/ui/button'
@@ -101,11 +101,20 @@ export class Page {
   }
 }
 
-const parse = (data: User) => {
+interface UserInput {
+  _id: string | undefined
+  name: string
+  email: string
+  role: string[]
+  version: number | undefined
+}
+
+const parse = (data: User): UserInput => {
   return {
+    _id: data._id,
     name: data.name,
     email: data.email,
-    role: data.role.map((e) => e._id),
+    role: data.role.filter((e) => e !== undefined).map((e) => e._id!!),
     version: data.version,
   }
 }
@@ -234,10 +243,34 @@ const getUsers = async (page: Page): Promise<User[]> => {
 
 const getUsersSize = async (): Promise<number> => users.length
 
-const updateUser = async (user: User, callback: Function): Promise<User> => {
-  console.log(`Update user: ${JSON.stringify(parse(user))}`)
-  callback()
-  return user
+const createUser = async (data: UserInput): Promise<User> => {
+  console.log(`Create user: ${JSON.stringify(data)}`)
+  return {
+    _id: data._id,
+    name: data.name,
+    email: data.email,
+    role: roles.filter((e) => data.role.includes(e._id!!)),
+    version: data.version,
+    createdBy: 'XXX',
+    createdDate: '2021-10-01',
+    modifiedBy: 'XXX',
+    modifiedDate: '2021-10-01',
+  }
+}
+
+const updateUser = async (data: UserInput): Promise<User> => {
+  console.log(`Update user: ${JSON.stringify(data)}`)
+  return {
+    _id: data._id,
+    name: data.name,
+    email: data.email,
+    role: roles.filter((e) => data.role.includes(e._id!!)),
+    version: data.version,
+    createdBy: 'XXX',
+    createdDate: '2021-10-01',
+    modifiedBy: 'XXX',
+    modifiedDate: '2021-10-01',
+  }
 }
 
 const deleteUser = async (user: User): Promise<void> => {
@@ -245,7 +278,7 @@ const deleteUser = async (user: User): Promise<void> => {
 }
 
 const formSchema = z.object({
-  id: z.string().optional(),
+  _id: z.string().optional(),
   name: z.string().min(2, {
     message: 'Username must be at least 2 characters.',
   }),
@@ -255,7 +288,204 @@ const formSchema = z.object({
   role: z.string().length(1, {
     message: 'You must select role.',
   }),
+  version: z.number().optional(),
 })
+
+interface UserDialogProps {
+  children?: React.ReactNode
+  data: UserInput | undefined
+  submit: (data: UserInput) => void | undefined
+}
+
+const UserDialog = ({ children, data, submit }: UserDialogProps) => {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      _id: undefined,
+      name: '',
+      email: '',
+      role: '',
+      version: undefined,
+    },
+  })
+
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    if (submit) {
+      submit({
+        _id: values._id,
+        name: values.name,
+        email: values.email,
+        role: [values.role],
+        version: values.version,
+      })
+    }
+    form.reset()
+    setIsOpen(false)
+  }
+
+  return (
+    <>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(nextState) => {
+          setIsOpen(nextState)
+          if (!nextState) {
+            form.reset()
+          } else {
+            if (data !== undefined) {
+              form.setValue('_id', data._id)
+              form.setValue('name', data.name)
+              form.setValue('email', data.email)
+              form.setValue('role', data.role[0])
+            }
+          }
+        }}
+      >
+        <DialogTrigger asChild>{children}</DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{form.getValues()._id === undefined ? 'Add user' : 'Update user'}</DialogTitle>
+            <DialogDescription>Some description goes here.</DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="col-span-4">
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter your name" {...field} />
+                        </FormControl>
+                        <FormDescription>Some text goes here.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem className="col-span-4">
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter your email" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <FormField
+                    control={form.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem className="col-span-4">
+                        <FormLabel>Role</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                {roles.map((role) => (
+                                  <SelectItem key={role._id} value={role._id?.toString() ? role._id?.toString() : ''}>
+                                    {role.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit">Submit</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+const columns: ColumnDef<User>[] = [
+  {
+    accessorKey: '_id',
+    header: 'ID',
+  },
+  {
+    accessorKey: 'name',
+    header: 'Name',
+  },
+  {
+    accessorKey: 'email',
+    header: 'Email',
+  },
+  {
+    accessorKey: 'role',
+    header: () => <div className="font-bold">Role</div>,
+    cell: ({ row }) => {
+      const formatted = row.original.role.map((role) => role.name).join(', ')
+      return <div className="">{formatted}</div>
+    },
+  },
+  {
+    id: 'actions',
+    header: '',
+    cell: ({ row }) => {
+      const user = row.original
+      return (
+        <div className="flex">
+          <div className="ml-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <UserDialog
+                  data={parse(user)}
+                  submit={(data) => {
+                    updateUser(data).then((user) => {})
+                  }}
+                >
+                  <Label className="group m-0 inline-flex w-full rounded-md bg-background px-2 py-2 text-sm font-normal transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none">
+                    Update
+                  </Label>
+                </UserDialog>
+                <Label
+                  className="group m-0 inline-flex w-full rounded-md bg-background px-2 py-2 text-sm font-normal transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
+                  onClick={() => deleteUser(user)}
+                >
+                  Delete
+                </Label>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      )
+    },
+  },
+]
 
 const Users = () => {
   const [pagination, setPagination] = React.useState<PaginationState>({
@@ -264,9 +494,6 @@ const Users = () => {
   })
   const [users, setUsers] = useState<User[]>([])
   const [usersSize, setUsersSize] = useState(0)
-
-  // for dialog
-  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
     getUsers(new Page(pagination.pageIndex, pagination.pageSize, 'id', 'ASC'))
@@ -284,68 +511,6 @@ const Users = () => {
       .catch((e) => console.error(e))
   }, [pagination])
 
-  const columns: ColumnDef<User>[] = [
-    {
-      accessorKey: '_id',
-      header: 'ID',
-    },
-    {
-      accessorKey: 'name',
-      header: 'Name',
-    },
-    {
-      accessorKey: 'email',
-      header: 'Email',
-    },
-    {
-      accessorKey: 'role',
-      header: () => <div className="font-bold">Role</div>,
-      cell: ({ row }) => {
-        const formatted = row.original.role.map((role) => role.name).join(', ')
-        return <div className="">{formatted}</div>
-      },
-    },
-    {
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => {
-        const user = row.original
-        return (
-          <div className="flex">
-            <div className="ml-auto">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={() =>
-                      updateUser(user, () => {
-                        setIsOpen(true)
-                        form.setValue('id', user._id)
-                        form.setValue('name', user.name)
-                        form.setValue('email', user.email)
-                        form.setValue('role', user.role[0]._id!!)
-                      })
-                    }
-                  >
-                    Update
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => deleteUser(user)}>Delete</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        )
-      },
-    },
-  ]
-
   const table = useReactTable({
     data: users,
     columns: columns,
@@ -359,113 +524,21 @@ const Users = () => {
     debugTable: false,
   })
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      id: undefined,
-      name: '',
-      email: '',
-      role: '',
-    },
-  })
-
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-    form.reset()
-    setIsOpen(false)
-  }
-
   return (
     <div>
       <div className="flex flex-col">
-        <Dialog
-          open={isOpen}
-          onOpenChange={(e) => {
-            setIsOpen(e)
-            form.reset()
-          }}
-        >
-          <DialogTrigger asChild>
+        <>
+          <UserDialog
+            data={undefined}
+            submit={(data) => {
+              createUser(data).then((user) => {})
+            }}
+          >
             <Button variant="outline" className="my-4 ml-auto flex-1">
               Add user
             </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>{form.getValues().id === undefined ? 'Add user' : 'Update user'}</DialogTitle>
-              <DialogDescription>Some description goes here.</DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem className="col-span-4">
-                          <FormLabel>Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your name" {...field} />
-                          </FormControl>
-                          <FormDescription>Some text goes here.</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem className="col-span-4">
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your email" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <FormField
-                      control={form.control}
-                      name="role"
-                      render={({ field }) => (
-                        <FormItem className="col-span-4">
-                          <FormLabel>Role</FormLabel>
-                          <FormControl>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Select a role" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectGroup>
-                                  {roles.map((role) => (
-                                    <SelectItem key={role._id} value={role._id?.toString() ? role._id?.toString() : ''}>
-                                      {role.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit">Submit</Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-
+          </UserDialog>
+        </>
         <div className="rounded-md border">
           <Table>
             <TableHeader>
