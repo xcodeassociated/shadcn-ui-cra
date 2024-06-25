@@ -61,6 +61,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { OnChangeFn } from '@tanstack/table-core/src/types'
 
 export interface Role {
   readonly _id: string | undefined
@@ -487,36 +488,27 @@ const columns: ColumnDef<User>[] = [
   },
 ]
 
-const Users = () => {
-  const [pagination, setPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 1,
-  })
-  const [users, setUsers] = useState<User[]>([])
-  const [usersSize, setUsersSize] = useState(0)
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[]
+  data: TData[]
+  total: number
+  pagination: PaginationState
+  paginationChangeFn: OnChangeFn<PaginationState>
+}
 
-  useEffect(() => {
-    getUsers(new Page(pagination.pageIndex, pagination.pageSize, 'id', 'ASC'))
-      .then((data) => setUsers(data))
-      .catch((e) => console.error(e))
-
-    getUsersSize()
-      .then((data) => setUsersSize(data))
-      .catch((e) => console.error(e))
-  }, [])
-
-  useEffect(() => {
-    getUsers(new Page(pagination.pageIndex, pagination.pageSize, 'id', 'ASC'))
-      .then((data) => setUsers(data))
-      .catch((e) => console.error(e))
-  }, [pagination])
-
+export const DataTable = <TData, TValue>({
+  columns,
+  data,
+  total,
+  pagination,
+  paginationChangeFn,
+}: DataTableProps<TData, TValue>) => {
   const table = useReactTable({
-    data: users,
+    data: data,
     columns: columns,
     getCoreRowModel: getCoreRowModel(),
-    onPaginationChange: setPagination,
-    rowCount: usersSize,
+    onPaginationChange: paginationChangeFn,
+    rowCount: total,
     state: {
       pagination,
     },
@@ -527,18 +519,6 @@ const Users = () => {
   return (
     <div>
       <div className="flex flex-col">
-        <>
-          <UserDialog
-            data={undefined}
-            submit={(data) => {
-              createUser(data).then((user) => {})
-            }}
-          >
-            <Button variant="outline" className="my-4 ml-auto flex-1">
-              Add user
-            </Button>
-          </UserDialog>
-        </>
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -596,22 +576,75 @@ const Users = () => {
   )
 }
 
-function App() {
+const Users = () => {
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 1,
+  })
+  const [users, setUsers] = useState<User[]>([])
+  const [usersSize, setUsersSize] = useState(0)
+
+  useEffect(() => {
+    getUsers(new Page(pagination.pageIndex, pagination.pageSize, 'id', 'ASC'))
+      .then((data) => setUsers(data))
+      .catch((e) => console.error(e))
+
+    getUsersSize()
+      .then((data) => setUsersSize(data))
+      .catch((e) => console.error(e))
+  }, [])
+
+  useEffect(() => {
+    getUsers(new Page(pagination.pageIndex, pagination.pageSize, 'id', 'ASC'))
+      .then((data) => setUsers(data))
+      .catch((e) => console.error(e))
+  }, [pagination])
+
+  return (
+    <div>
+      <div className="flex flex-col">
+        <>
+          <UserDialog
+            data={undefined}
+            submit={(data) => {
+              createUser(data).then((user) => {})
+            }}
+          >
+            <Button variant="outline" className="my-4 ml-auto flex-1">
+              Add user
+            </Button>
+          </UserDialog>
+        </>
+        <>
+          <DataTable
+            columns={columns}
+            data={users}
+            total={usersSize}
+            pagination={pagination}
+            paginationChangeFn={setPagination}
+          />
+        </>
+      </div>
+    </div>
+  )
+}
+
+const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault()
+  console.log(`search: ${e.currentTarget.search.value}`)
+  e.currentTarget.reset()
+}
+
+const handleUserDropdownSelect = (item: string) => {
+  console.log(`User dropdown change: ${item}`)
+}
+
+export function App() {
   const [count, setCount] = useState(0)
   const { theme } = useTheme()
-  const { t } = useTranslation(['main'])
   const navigate = useNavigate()
   const [authenticated, setAuthenticated] = useState(true)
-
-  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    console.log(`search: ${e.currentTarget.search.value}`)
-    e.currentTarget.reset()
-  }
-
-  const handleUserDropdownSelect = (item: string) => {
-    console.log(`User dropdown change: ${item}`)
-  }
+  const { t } = useTranslation(['main'])
 
   return (
     <div className="flex min-h-screen w-full flex-col">
