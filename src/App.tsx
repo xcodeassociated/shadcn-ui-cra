@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { cn } from '@/lib/utils'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import {
+  ArrowUpDown,
   Languages,
   LogOut,
   Menu,
@@ -41,7 +42,15 @@ import {
 import { useLocation, useNavigate } from 'react-router'
 import { Label } from '@/components/ui/label'
 
-import { ColumnDef, flexRender, getCoreRowModel, PaginationState, useReactTable } from '@tanstack/react-table'
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  PaginationState,
+  SortingState,
+  useReactTable,
+} from '@tanstack/react-table'
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 
@@ -297,8 +306,8 @@ const formSchema = z.object({
 
 interface UserDialogProps {
   children?: React.ReactNode
-  data: UserInput | undefined
-  submit: (data: UserInput) => void | undefined
+  data?: UserInput
+  submit?: (data: UserInput) => void
 }
 
 const UserDialog = ({ children, data, submit }: UserDialogProps) => {
@@ -430,7 +439,14 @@ const UserDialog = ({ children, data, submit }: UserDialogProps) => {
 const columns: ColumnDef<User>[] = [
   {
     accessorKey: '_id',
-    header: 'ID',
+    header: ({ column }) => {
+      return (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+          ID
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
   },
   {
     accessorKey: 'name',
@@ -582,6 +598,8 @@ interface DataTableProps<TData, TValue> {
   total: number
   pagination: PaginationState
   paginationChangeFn: OnChangeFn<PaginationState>
+  sorting?: SortingState
+  sortingChangeFn?: OnChangeFn<SortingState>
 }
 
 export const DataTable = <TData, TValue>({
@@ -590,6 +608,8 @@ export const DataTable = <TData, TValue>({
   total,
   pagination,
   paginationChangeFn,
+  sorting,
+  sortingChangeFn,
 }: DataTableProps<TData, TValue>) => {
   const table = useReactTable({
     data: data,
@@ -599,9 +619,12 @@ export const DataTable = <TData, TValue>({
     rowCount: total,
     state: {
       pagination,
+      sorting,
     },
     manualPagination: true,
     debugTable: false,
+    onSortingChange: sortingChangeFn,
+    manualSorting: true,
   })
 
   return (
@@ -649,32 +672,33 @@ export const DataTable = <TData, TValue>({
   )
 }
 
+const buildPage = (pagination: PaginationState, sorting: SortingState): Page => {
+  return new Page(pagination.pageIndex, pagination.pageSize, sorting[0].id, sorting[0].desc ? 'DESC' : 'ASC')
+}
+
 const Users = () => {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 1,
   })
+  const [sorting, setSorting] = React.useState<SortingState>([{ id: '_id', desc: false }])
+
   const [users, setUsers] = useState<User[]>([])
   const [usersSize, setUsersSize] = useState(0)
 
   useEffect(() => {
-    getUsers(new Page(pagination.pageIndex, pagination.pageSize, 'id', 'ASC'))
-      .then((data) => setUsers(data))
-      .catch((e) => console.error(e))
-
     getUsersSize()
       .then((data) => setUsersSize(data))
       .catch((e) => console.error(e))
-  }, [])
 
-  useEffect(() => {
-    getUsers(new Page(pagination.pageIndex, pagination.pageSize, 'id', 'ASC'))
+    getUsers(buildPage(pagination, sorting))
       .then((data) => {
-        console.log(`Pagination changed: ${JSON.stringify(pagination)}`)
+        console.log(`Pagination or sorting changed: ${JSON.stringify(pagination)}`)
+        console.log(`Sorting: ${JSON.stringify(sorting)}`)
         setUsers(data)
       })
       .catch((e) => console.error(e))
-  }, [pagination])
+  }, [pagination, sorting])
 
   return (
     <div>
@@ -698,6 +722,8 @@ const Users = () => {
             total={usersSize}
             pagination={pagination}
             paginationChangeFn={setPagination}
+            sorting={sorting}
+            sortingChangeFn={setSorting}
           />
         </>
       </div>
