@@ -74,6 +74,7 @@ import { OnChangeFn } from '@tanstack/table-core/src/types'
 
 import { ChevronLeftIcon, ChevronRightIcon, DoubleArrowLeftIcon, DoubleArrowRightIcon } from '@radix-ui/react-icons'
 import { Table as TTable } from '@tanstack/react-table'
+import MultipleSelector, { Option } from '@/components/custom/multiple-selector'
 
 export interface Role {
   readonly _id: string | undefined
@@ -298,7 +299,7 @@ const formSchema = z.object({
   email: z.string().min(2, {
     message: 'Username must be at least 2 characters.',
   }),
-  role: z.string().length(1, {
+  role: z.array(z.string()).min(1, {
     message: 'You must select role.',
   }),
   version: z.number().optional(),
@@ -319,7 +320,7 @@ const UserDialog = ({ children, data, submit }: UserDialogProps) => {
       _id: undefined,
       name: '',
       email: '',
-      role: '',
+      role: [],
       version: undefined,
     },
   })
@@ -330,7 +331,7 @@ const UserDialog = ({ children, data, submit }: UserDialogProps) => {
         _id: values._id,
         name: values.name,
         email: values.email,
-        role: [values.role],
+        role: [...values.role],
         version: values.version,
       })
     }
@@ -351,7 +352,7 @@ const UserDialog = ({ children, data, submit }: UserDialogProps) => {
               form.setValue('_id', data._id)
               form.setValue('name', data.name)
               form.setValue('email', data.email)
-              form.setValue('role', data.role[0])
+              form.setValue('role', data.role)
             }
           }
         }}
@@ -404,20 +405,32 @@ const UserDialog = ({ children, data, submit }: UserDialogProps) => {
                       <FormItem className="col-span-4">
                         <FormLabel>Role</FormLabel>
                         <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="w-[180px]">
-                              <SelectValue placeholder="Select a role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectGroup>
-                                {roles.map((role) => (
-                                  <SelectItem key={role._id} value={role._id?.toString() ? role._id?.toString() : ''}>
-                                    {role.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectGroup>
-                            </SelectContent>
-                          </Select>
+                          <MultipleSelector
+                            value={[
+                              ...field.value.map((e): Option => {
+                                return {
+                                  label: roles.filter((r) => r._id === e)[0].name,
+                                  value: e,
+                                }
+                              }),
+                            ]}
+                            defaultOptions={roles.map((role): Option => {
+                              return {
+                                label: role.name,
+                                value: role._id?.toString() ? role._id?.toString() : '',
+                              }
+                            })}
+                            onChange={(value) => {
+                              field.onChange(value.map((e) => e.value))
+                            }}
+                            placeholder="Select roles..."
+                            hidePlaceholderWhenSelected={true}
+                            emptyIndicator={
+                              <p className="text-center text-lg leading-10 text-gray-600 dark:text-gray-400">
+                                no results found.
+                              </p>
+                            }
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
